@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sortable Lists App</title>
+<style>
+  * {
+    font-family: monospace;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 100vh;
+    padding: 10px;
+  }
+  .input-output-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .input-textarea, .output-textarea {
+    width: 100%;
+    max-width: 500px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    font-size: 16px;
+  }
+  .action-button {
+    cursor: pointer;
+    padding: 10px 20px;
+    border-radius: 5px;
+    border: none;
+    background-color: #007BFF;
+    color: white;
+    font-size: 16px;
+    display: block;
+    margin: 10px auto;
+    max-width: 200px;
+  }
+  .list-container {
+    width: 50%;
+    display: inline-block;
+    vertical-align: top;
+    margin: 0;
+    box-sizing: border-box;
+    /*margin: 0 2%; */
+  }
+  /*.list-container:first-child {
+    margin-right: 2%;
+  }
+  .list-container:last-child {
+    margin-left: 2%;
+  }*/
+  .list {
+    border: 1px solid #ddd;
+    padding: 0;
+    list-style: none;
+    overflow-y: auto;
+  }
+  .list div {
+    border-bottom: 1px solid #ddd;
+    padding: 0px 0px; /* Minimal padding for list items */
+    cursor: move;
+    min-height: 1.5em;
+    white-space: pre-wrap; //
+  }
+  #sorting-area {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 100%;
+    padding: 0;
+  }
+  .invisible-element {
+    position: absolute;
+    top: 0; /* Add this */
+    bottom: 0; /* Add this */
+    width: 6em; /* adjust as needed */
+    height: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(1, 0, 0, 0.05); /* for debugging */
+    z-index: 2; /* higher than other elements */
+  }
+  /*@media screen and (max-width: 767px) {
+    .list-container {
+      width: 100%;
+      margin: 10px 0;
+    }*/
+/*
+    #sorting-area {
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .input-output-container, #sorting-area {
+      flex-direction: column;
+      align-items: center;
+    }*/
+  }
+</style>
+</head>
+<body>
+<div class="input-output-container" id="input-section">
+  <textarea id="content" class="input-textarea"></textarea>
+  <button class="action-button" onclick="initializeList()">Redo</button>
+</div>
+
+<div id="sorting-area" class="list-action-buttons">
+  <div id="source-list" class="list-container">
+      <h2>Source List</h2>
+      <div id="items" class="list"></div>
+  </div>
+  <div class="invisible-element"></div>
+  <div id="destination-list" class="list-container">
+      <h2>Destination List</h2>
+      <div id="second-items" class="list"></div>
+  </div>
+</div>
+<div class="input-output-container" id="output-section">
+  <button class="action-button" onclick="combineLists()">Combine</button>
+  <button class="action-button" onclick="reUp()">Re-Up</button>
+  <textarea id="combinedContent" class="output-textarea"></textarea>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    initializeList();
+});
+
+const splitter = '\n```\n';
+let delimiter = '\n';
+function initializeList() {
+    var contentText = document.getElementById('content').value;
+    var lists = contentText.split(splitter, 2);
+    clearList('items');
+    clearList('second-items');
+    delimiter = (lists.join('')||'\n').includes('\n') ? '\n' : ' ';
+    if (lists[0])
+        makeList('items', lists[0]);
+    if (lists[1])
+        makeList('second-items', lists[1]);
+    new Sortable(document.getElementById('items'), {
+        group: 'shared',
+    });
+
+    new Sortable(document.getElementById('second-items'), {
+        group: 'shared',
+    });
+}
+
+function clearList(listId) {
+    document.getElementById(listId).innerHTML = '';
+}
+function makeList(listId, text,split) {
+    let el = document.getElementById(listId);
+    let items = text.split(delimiter);
+    items.forEach(function(item) {
+        let div = document.createElement('div');
+        div.textContent = item;;
+        el.appendChild(div);
+    });
+}
+
+function combineLists() {
+    let one = document.getElementById('items');
+    let two = document.getElementById('second-items');
+    let sourceListItems = Array.from(one.children).map(item => item.textContent);
+    let destinationListItems = Array.from(two.children).map(item => item.textContent);
+
+    let combinedContent = sourceListItems.join(delimiter) + splitter + destinationListItems.join(delimiter);
+    document.getElementById('combinedContent').value = combinedContent;
+}
+
+function reUp() {
+    let newContent = document.getElementById('combinedContent').value;
+    document.getElementById('content').value = newContent;
+    document.getElementById('combinedContent').value = '';
+    clearList('items');
+    clearList('second-items');
+}
+</script>
+</body>
+</html>
